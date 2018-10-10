@@ -1,12 +1,12 @@
+cabal-version:  >=1.6
+build-type:     Simple
+
 name:           polyparse
-version:        1.12
-x-revision: 1
-license:        LGPL
-license-file:   COPYRIGHT
-copyright:      (c) 2006-2016 Malcolm Wallace
-author:         Malcolm Wallace <Malcolm.Wallace@me.com>
-maintainer:     author
-homepage:       http://code.haskell.org/~malcolm/polyparse/
+version:        1.20
+--x-revision: 0
+
+----------------------------------------
+
 category:       Text, Parsing
 synopsis:       A variety of alternative parser combinator libraries.
 description:
@@ -16,14 +16,30 @@ description:
         parsing, and so on.  Finally, Text.Parse is a proposed
         replacement for the standard Read class, for better
         deserialisation of Haskell values from Strings.
-build-type:     Simple
-cabal-version:  >=1.6
+
+tested-with:
+     GHC == 8.0.2
+  ,  GHC == 8.2.2
+  ,  GHC == 8.4.3
+  -- , GHC == 8.6.1
+
+license:        LGPL
+license-file:   COPYRIGHT
+copyright:      (c) 2006-2016 Malcolm Wallace
+author:         Malcolm Wallace <Malcolm.Wallace@me.com>
+maintainer:     author
+homepage:       http://code.haskell.org/~malcolm/polyparse/
+
 extra-source-files: LICENCE-LGPL, LICENCE-commercial
 
+----------------------------------------
+  
 source-repository head
   type:     darcs
   location: http://code.haskell.org/polyparse
 
+----------------------------------------
+  
 library
   hs-source-dirs:       src
   build-depends:        base < 4.12
@@ -54,3 +70,5 @@ library
   cpp-options:          -DVERSION="1.12"
   nhc98-options:        -K6M
   extensions:           CPP
+
+----------------------------------------
