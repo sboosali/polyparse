@@ -10,12 +10,18 @@ version:        1.20
 category:       Text, Parsing
 synopsis:       A variety of alternative parser combinator libraries.
 description:
-        A variety of alternative parser combinator libraries, including
-        the original HuttonMeijer set.  The Poly sets have features like
-        good error reporting, arbitrary token type, running state, lazy
-        parsing, and so on.  Finally, Text.Parse is a proposed
-        replacement for the standard Read class, for better
-        deserialisation of Haskell values from Strings.
+            A variety of alternative parser combinator libraries, including
+            the original HuttonMeijer set.  The Poly sets have features like
+            good error reporting, arbitrary token type, running state, lazy
+            parsing, and so on.  Finally, Text.Parse is a proposed
+            replacement for the standard Read class, for better
+            deserialisation of Haskell values from Strings.
+            .
+            Fork of @polyparse@.
+            .
+            (If you are the maintainer, please: [1] add an issue-tracker (see below);
+            and [2] review the emailed patch, also here <TODO>.)
+            .
 
 tested-with:
     GHC == 8.0.2
@@ -33,6 +39,8 @@ homepage:       http://code.haskell.org/~malcolm/polyparse/
 extra-source-files: LICENCE-LGPL, LICENCE-commercial
 
 ----------------------------------------
+
+bug-reports: http://github.com/sboosali/polyparse/issues
 
 source-repository head
   type:     darcs
@@ -70,5 +78,10 @@ library
   cpp-options:          -DVERSION="1.12"
   nhc98-options:        -K6M
   extensions:           CPP
+
+ if impl(ghc >= 8.2)
+    ghc-options:
+       -Wnoncanonical-monad-instances
+       -Wnoncanonical-monadfail-instances
 
 ----------------------------------------

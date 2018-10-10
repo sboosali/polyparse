@@ -1,3 +1,12 @@
+{-# LANGUAGE CPP #-}
+
+------------------------------
+#ifndef MIN_VERSION_GLASGOW_HASKELL
+#define MIN_VERSION_GLASGOW_HASKELL(x,y,z1,z2) 0
+#endif
+-- NOTE `ghc-7.10` introduced `MIN_VERSION_GLASGOW_HASKELL`.
+------------------------------
+
 {-----------------------------------------------------------------------------
 
                  A LIBRARY OF MONADIC PARSER COMBINATORS
@@ -57,6 +66,19 @@ import Data.Char
 import Control.Applicative ( Applicative(pure,(<*>)), Alternative(empty,(<|>)) )
 import Control.Monad
 
+------------------------------
+#ifdef MIN_VERSION_base
+#if MIN_VERSION_base(4,9,0)
+
+-- NOTE `ghc-8.0.*` bundles `base-4.9.0.0`,
+-- which introduces `Control.Monad.Fail`.
+
+import Control.Monad.Fail (MonadFail(..))
+
+#endif
+#endif
+------------------------------
+
 infixr 5 +++
 
 --- The parser monad ---------------------------------------------------------
@@ -75,6 +97,61 @@ instance Functor (Parser s t e) where
                         Left err  -> Left err
                        )
 
+------------------------------
+#if MIN_VERSION_GLASGOW_HASKELL(8,2,0,0)
+------------------------------
+
+-- NOTE Under this `CPP`, we fix instances for these proposals:
+--
+-- - the `MonadFail` proposal:
+--
+--   Whose warnings (from `ghc-8.0`) become errors in `ghc-8.6`.
+--
+--   See <https://ghc.haskell.org/trac/ghc/wiki/Proposal/MonadFail>
+--
+-- - the `MonadOfNoReturn` proposal:
+--
+--   Warnings (and future-compatibility) exist from `ghc-7.10`.
+--   But the transition is delayed by incompatible packages.
+--
+--   See <https://ghc.haskell.org/trac/ghc/wiki/Proposal/MonadOfNoReturn>
+--
+
+-- NOTE We guard `#if` (implicitly) beneath `#ifdef` (see the top of this file),
+-- for backwards-compatibility with:
+--
+-- - older GHC versions,
+-- - older Cabal versions,
+-- - non-GHC compilers,
+-- - and any haskell compiler supporting `-XCPP`.
+--
+
+instance Applicative (Parser s t e) where
+   -- pure      :: a -> Parser s t e a
+   pure v        = P (\st inp -> Right [(v,st,inp)])
+
+   (<*>) = ap
+
+instance Monad (Parser s t e) where
+
+   -- >>=         :: Parser s t e a -> (a -> Parser s t e b) -> Parser s t e b
+   (P p) >>= f     = P (\st inp -> case p st inp of
+                        Right res -> foldr joinresults (Right [])
+                            [ papply' (f v) s out | (v,s,out) <- res ]
+                        Left err  -> Left err
+                       )
+
+instance MonadFail (Parser s t e) where
+
+   -- fail        :: String -> Parser s t e a
+   fail _err        = P (\_st _inp -> Right [])
+
+   -- I know it's counterintuitive, but we want no-parse, not an error.
+
+------------------------------
+#else
+------------------------------
+
 instance Applicative (Parser s t e) where
    pure  = return
    (<*>) = ap
@@ -92,6 +169,10 @@ instance Monad (Parser s t e) where
    fail err        = P (\st inp -> Right [])
   -- I know it's counterintuitive, but we want no-parse, not an error.
 
+------------------------------
+#endif
+------------------------------
+
 instance Alternative (Parser s t e) where
    empty = mzero
    (<|>) = mplus
@@ -101,6 +182,7 @@ instance MonadPlus (Parser s t e) where
    mzero           = P (\st inp -> Right [])
    -- mplus       :: Parser s t e a -> Parser s t e a -> Parser s t e a
    (P p) `mplus` (P q) = P (\st inp -> joinresults (p st inp) (q st inp))
+
 
 -- joinresults ensures that explicitly raised errors are dominant,
 -- provided no parse has yet been found.  The commented out code is

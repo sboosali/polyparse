@@ -1,5 +1,12 @@
 {-# LANGUAGE CPP #-}
 
+------------------------------
+#ifndef MIN_VERSION_GLASGOW_HASKELL
+#define MIN_VERSION_GLASGOW_HASKELL(x,y,z1,z2) 0
+#endif
+-- NOTE `ghc-7.10` introduced `MIN_VERSION_GLASGOW_HASKELL`.
+------------------------------
+
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Text.ParserCombinators.HuttonMeijer
@@ -67,8 +74,7 @@ instance Functor Parser where
    fmap f (P p)    = P (\inp -> [(f v, out) | (v,out) <- p inp])
 
 ------------------------------
-#ifdef MIN_VERSION_GLASGOW_HASKELL
-#if MIN_VERSION_GLASGOW_HASKELL(8,4,0,0)
+#if MIN_VERSION_GLASGOW_HASKELL(8,2,0,0)
 ------------------------------
 
 -- NOTE Under this `CPP`, we fix instances for these proposals:
@@ -87,11 +93,13 @@ instance Functor Parser where
 --   See <https://ghc.haskell.org/trac/ghc/wiki/Proposal/MonadOfNoReturn>
 --
 
--- NOTE We guard `#if` beneath `#ifdef`, for backwards-compatibility with:
+-- NOTE We guard `#if` (implicitly) beneath `#ifdef` (see the top of this file),
+-- for backwards-compatibility with:
 --
 -- - older GHC versions,
 -- - older Cabal versions,
--- - and non-GHC compilers.
+-- - non-GHC compilers,
+-- - and any haskell compiler supporting `-XCPP`.
 --
 
 instance Applicative Parser where
@@ -112,7 +120,6 @@ instance MonadFail Parser where
    fail _ = P (\_ -> [])
 
 ------------------------------
-#endif
 #else
 ------------------------------
 
