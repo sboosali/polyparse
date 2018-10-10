@@ -86,7 +86,7 @@ instance Commitment (Parser t) where
                            r@(Committed _)    -> r )
             showErr (name,err) = name ++ "\n" ++ indent 2 err
 
-infixl 6 `onFail`	-- not sure about precedence 6?
+infixl 6 `onFail`    -- not sure about precedence 6?
 
 -- | @p `onFail` q@ means parse p, unless p fails, in which case
 --   parse q instead.

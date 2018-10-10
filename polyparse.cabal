@@ -18,10 +18,10 @@ description:
         deserialisation of Haskell values from Strings.
 
 tested-with:
-     GHC == 8.0.2
-  ,  GHC == 8.2.2
-  ,  GHC == 8.4.3
-  -- , GHC == 8.6.1
+    GHC == 8.0.2
+  , GHC == 8.2.2
+  , GHC == 8.4.3
+  --, GHC == 8.6.1
 
 license:        LGPL
 license-file:   COPYRIGHT
@@ -33,7 +33,7 @@ homepage:       http://code.haskell.org/~malcolm/polyparse/
 extra-source-files: LICENCE-LGPL, LICENCE-commercial
 
 ----------------------------------------
-  
+
 source-repository head
   type:     darcs
   location: http://code.haskell.org/polyparse
@@ -42,7 +42,7 @@ source-repository head
   
 library
   hs-source-dirs:       src
-  build-depends:        base < 4.12
+  build-depends:        base < 5
   exposed-modules:
         Text.ParserCombinators.HuttonMeijer,
         Text.ParserCombinators.HuttonMeijerWallace,
