@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Text.ParserCombinators.HuttonMeijer
@@ -38,6 +40,19 @@ import Data.Char
 import Control.Applicative ( Applicative(pure,(<*>)), Alternative(empty,(<|>)) )
 import Control.Monad
 
+------------------------------
+#ifdef MIN_VERSION_base
+#if MIN_VERSION_base(4,9,0)
+
+-- NOTE `ghc-8.0.*` bundles `base-4.9.0.0`,
+-- which introduces `Control.Monad.Fail`.
+
+import Control.Monad.Fail (MonadFail(..))
+
+#endif
+#endif
+------------------------------
+
 infixr 5 +++
 
 type Token = Char
@@ -51,6 +66,56 @@ instance Functor Parser where
    -- map         :: (a -> b) -> (Parser a -> Parser b)
    fmap f (P p)    = P (\inp -> [(f v, out) | (v,out) <- p inp])
 
+------------------------------
+#ifdef MIN_VERSION_GLASGOW_HASKELL
+#if MIN_VERSION_GLASGOW_HASKELL(8,4,0,0)
+------------------------------
+
+-- NOTE Under this `CPP`, we fix instances for these proposals:
+--
+-- - the `MonadFail` proposal:
+--
+--   Whose warnings (from `ghc-8.0`) become errors in `ghc-8.6`.
+--
+--   See <https://ghc.haskell.org/trac/ghc/wiki/Proposal/MonadFail>
+--
+-- - the `MonadOfNoReturn` proposal:
+--
+--   Warnings (and future-compatibility) exist from `ghc-7.10`.
+--   But the transition is delayed by incompatible packages.
+--
+--   See <https://ghc.haskell.org/trac/ghc/wiki/Proposal/MonadOfNoReturn>
+--
+
+-- NOTE We guard `#if` beneath `#ifdef`, for backwards-compatibility with:
+--
+-- - older GHC versions,
+-- - older Cabal versions,
+-- - and non-GHC compilers.
+--
+
+instance Applicative Parser where
+   -- pure      :: a -> Parser a
+   pure v        = P (\inp -> [(v,inp)])
+
+   (<*>) = ap
+
+instance Monad Parser where
+   -- return      :: a -> Parser a
+   return          = pure
+
+   -- >>=         :: Parser a -> (a -> Parser b) -> Parser b
+   (P p) >>= f     = P (\inp -> concat [papply (f v) out | (v,out) <- p inp])
+
+instance MonadFail Parser where
+   -- fail :: String -> Parser a
+   fail _ = P (\_ -> [])
+
+------------------------------
+#endif
+#else
+------------------------------
+
 instance Applicative Parser where
    pure  = return
    (<*>) = ap
@@ -63,7 +128,11 @@ instance Monad Parser where
    (P p) >>= f     = P (\inp -> concat [papply (f v) out | (v,out) <- p inp])
 
    -- fail        :: String -> Parser a
-   fail _          = P (\_ -> [])
+   fail _           = P (\_ -> [])
+
+------------------------------
+#endif
+------------------------------
 
 instance Alternative Parser where
    empty = mzero
