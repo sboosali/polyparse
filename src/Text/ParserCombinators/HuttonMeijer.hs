@@ -77,31 +77,6 @@ instance Functor Parser where
 #if MIN_VERSION_GLASGOW_HASKELL(8,2,0,0)
 ------------------------------
 
--- NOTE Under this `CPP`, we fix instances for these proposals:
---
--- - the `MonadFail` proposal:
---
---   Whose warnings (from `ghc-8.0`) become errors in `ghc-8.6`.
---
---   See <https://ghc.haskell.org/trac/ghc/wiki/Proposal/MonadFail>
---
--- - the `MonadOfNoReturn` proposal:
---
---   Warnings (and future-compatibility) exist from `ghc-7.10`.
---   But the transition is delayed by incompatible packages.
---
---   See <https://ghc.haskell.org/trac/ghc/wiki/Proposal/MonadOfNoReturn>
---
-
--- NOTE We guard `#if` (implicitly) beneath `#ifdef` (see the top of this file),
--- for backwards-compatibility with:
---
--- - older GHC versions,
--- - older Cabal versions,
--- - non-GHC compilers,
--- - and any haskell compiler supporting `-XCPP`.
---
-
 instance Applicative Parser where
    -- pure      :: a -> Parser a
    pure v        = P (\inp -> [(v,inp)])

@@ -1,4 +1,4 @@
-cabal-version:  >=1.6
+cabal-version:  >=1.10
 build-type:     Simple
 
 name:           polyparse
@@ -24,7 +24,8 @@ description:
             .
 
 tested-with:
-    GHC == 8.0.2
+    GHC == 7.10.3
+  , GHC == 8.0.2
   , GHC == 8.2.2
   , GHC == 8.4.3
   --, GHC == 8.6.1
@@ -47,10 +48,10 @@ source-repository head
   location: http://code.haskell.org/polyparse
 
 ----------------------------------------
-  
+
 library
+
   hs-source-dirs:       src
-  build-depends:        base < 5
   exposed-modules:
         Text.ParserCombinators.HuttonMeijer,
         Text.ParserCombinators.HuttonMeijerWallace,
@@ -65,9 +66,13 @@ library
         Text.ParserCombinators.Poly.StateLazy,
         Text.ParserCombinators.Poly.Lex,
         Text.Parse
+
+  build-depends:   base < 5
+
   if impl(ghc)
-    build-depends:      bytestring
-    build-depends:       text
+    build-depends: bytestring
+                 , text
+
     exposed-modules:
         Text.ParserCombinators.Poly.ByteString
         Text.ParserCombinators.Poly.ByteStringChar
@@ -75,13 +80,15 @@ library
         Text.ParserCombinators.Poly.Text
         Text.ParserCombinators.Poly.StateText
 --      Text.Parse.Text
+
+  default-language:   Haskell98
+  default-extensions: CPP
+
   cpp-options:          -DVERSION="1.12"
   nhc98-options:        -K6M
-  extensions:           CPP
+  if impl(ghc >= 8.0)
+     ghc-options:
+        -Wnoncanonical-monad-instances
+        -Wnoncanonical-monadfail-instances
 
- if impl(ghc >= 8.2)
-    ghc-options:
-       -Wnoncanonical-monad-instances
-       -Wnoncanonical-monadfail-instances
-
-----------------------------------------
+--------------------------------------------------

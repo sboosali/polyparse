@@ -1,3 +1,12 @@
+{-# LANGUAGE CPP #-}
+
+------------------------------
+#ifndef MIN_VERSION_GLASGOW_HASKELL
+#define MIN_VERSION_GLASGOW_HASKELL(x,y,z1,z2) 0
+#endif
+-- NOTE `ghc-7.10` introduced `MIN_VERSION_GLASGOW_HASKELL`.
+------------------------------
+
 -- | This module contains the definitions for a generic parser, without
 --   running state.  These are the parts that are shared between the Plain
 --   and Lazy variations.  Do not import this module directly, but only
@@ -31,20 +40,24 @@ instance Functor (Parser t) where
     fmap f (P p) = P (fmap f . p)
 
 instance Applicative (Parser t) where
-    pure f    = return f
+    pure x    = P (\ts-> Success ts x)
+
     pf <*> px = do { f <- pf; x <- px; return (f x) }
 #if defined(GLASGOW_HASKELL) && GLASGOW_HASKELL > 610
     p  <*  q  = p `discard` q
 #endif
 
 instance Monad (Parser t) where
-    return x     = P (\ts-> Success ts x)
-    fail e       = P (\ts-> Failure ts e)
+
     (P f) >>= g  = P (continue . f)
       where
         continue (Success ts x)             = let (P g') = g x in g' ts
         continue (Committed r)              = Committed (continue r)
         continue (Failure ts e)             = Failure ts e
+
+    return       = pure
+
+    fail e       = P (\ts-> Failure ts e)
 
 instance Alternative (Parser t) where
     empty     = fail "no parse"

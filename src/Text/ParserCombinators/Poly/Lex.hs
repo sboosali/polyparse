@@ -1,3 +1,12 @@
+{-# LANGUAGE CPP #-}
+
+------------------------------
+#ifndef MIN_VERSION_GLASGOW_HASKELL
+#define MIN_VERSION_GLASGOW_HASKELL(x,y,z1,z2) 0
+#endif
+-- NOTE `ghc-7.10` introduced `MIN_VERSION_GLASGOW_HASKELL`.
+------------------------------
+
 -- Author: Malcolm Wallace
 
 -- | In a strict language, where creating the entire input list of tokens
@@ -55,12 +64,15 @@ instance Functor (Parser t) where
 
 instance Monad (Parser t) where
     return x     = P (\ts-> Success ts x)
-    fail e       = P (\ts-> Failure ts e)
+    fail         = failParser
     (P f) >>= g  = P (continue . f)
       where
         continue (Success ts x)             = let (P g') = g x in g' ts
         continue (Committed r)              = Committed (continue r)
         continue (Failure ts e)             = Failure ts e
+
+failParser :: String -> Parser t a
+failParser e = P (\ts-> Failure ts e)
 
 instance Commitment (Parser t) where
     commit (P p)         = P (Committed . squash . p)

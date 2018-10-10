@@ -1,3 +1,12 @@
+{-# LANGUAGE CPP #-}
+
+------------------------------
+#ifndef MIN_VERSION_GLASGOW_HASKELL
+#define MIN_VERSION_GLASGOW_HASKELL(x,y,z1,z2) 0
+#endif
+-- NOTE `ghc-7.10` introduced `MIN_VERSION_GLASGOW_HASKELL`.
+------------------------------
+
 module Text.ParserCombinators.Poly.StateText
   ( -- * The Parser datatype
     Parser(P)

@@ -1,3 +1,12 @@
+{-# LANGUAGE CPP #-}
+
+------------------------------
+#ifndef MIN_VERSION_GLASGOW_HASKELL
+#define MIN_VERSION_GLASGOW_HASKELL(x,y,z1,z2) 0
+#endif
+-- NOTE `ghc-7.10` introduced `MIN_VERSION_GLASGOW_HASKELL`.
+------------------------------
+
 -- | This module contains the definitions for a generic parser, with
 --   running state.  These are the parts that are shared between the State
 --   and StateLazy variations.  Do not import this module directly, but only
