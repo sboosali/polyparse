@@ -33,6 +33,11 @@ import Text.ParserCombinators.Poly.Base
 import Text.ParserCombinators.Poly.Result
 import Control.Applicative
 
+import Text.ParserCombinators.Poly.Compat
+import Prelude hiding (fail)
+
+--------------------------------------------------------------------------------
+
 -- | This @Parser@ datatype is a fairly generic parsing monad with error
 --   reporting, and running state.
 --   It can be used for arbitrary token types, not just String input.
@@ -42,21 +47,68 @@ newtype Parser s t a = P (s -> [t] -> Result ([t],s) a)
 instance Functor (Parser s t) where
     fmap f (P p) = P (\s-> fmap f . p s)
 
+
+------------------------------
+#if defined(__GLASGOW_HASKELL__) && (__GLASGOW_HASKELL__ >= 800)
+------------------------------
+
 instance Applicative (Parser s t) where
-    pure f    = return f
-    pf <*> px = do { f <- pf; x <- px; return (f x) }
+
+   pure  = pureParser
+
+   {-# INLINE pure #-}
+
+   (<*>) = ap
+
+   {-# INLINE (<*>) #-}
+
+instance Monad (Parser s t) where
+
+   (>>=) = bindParser
+
+   {-# INLINE (>>=) #-}
+
+instance MonadFail (Parser s t) where
+
+  fail = failParser
+
+  {-# INLINE fail #-}
+
+------------------------------
+#else
+------------------------------
+
+instance Applicative (Parser s t) where
+    pure = pureParser
+    pf <*> px = do { f <- pf; x <- px; pure (f x) }
+
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 610
     p  <*  q  = p `discard` q
 #endif
 
 instance Monad (Parser s t) where
-    return x     = P (\s ts-> Success (ts,s) x)
-    fail e       = P (\s ts-> Failure (ts,s) e)
-    (P f) >>= g  = P (\s-> continue . f s)
-      where
-        continue (Success (ts,s) x)        = let (P g') = g x in g' s ts
-        continue (Committed r)             = Committed (continue r)
-        continue (Failure tss e)           = Failure tss e
+    return = pureParser
+    fail   = failParser
+    (>>=)  = bindParser
+
+------------------------------
+#endif
+------------------------------
+
+pureParser :: a -> Parser s t a
+pureParser x = P (\s ts-> Success (ts,s) x)
+
+failParser :: String -> Parser s t a
+failParser e = P (\s ts-> Failure (ts,s) e)
+
+bindParser :: Parser s t a -> (a -> Parser s t b) -> Parser s t b
+bindParser (P f) k = P (\s -> continue . f s)
+  where
+  continue (Success (ts,s) x)         = let (P k') = k x in k' s ts
+  continue (Committed r)              = Committed (continue r)
+  continue (Failure ts e)             = Failure ts e
+
+------------------------------
 
 instance Alternative (Parser s t) where
     empty     = fail "no parse"

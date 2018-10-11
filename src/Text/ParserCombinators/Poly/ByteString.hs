@@ -25,6 +25,11 @@ import Data.ByteString.Lazy (ByteString)
 import Control.Applicative
 import Data.Word
 
+import Text.ParserCombinators.Poly.Compat
+import Prelude hiding (fail)
+
+--------------------------------------------------------------------------------
+
 -- | This @Parser@ datatype is a specialised parsing monad with error
 --   reporting.  Whereas the standard version can be used for arbitrary
 --   token types, this version is specialised to ByteString input only.
@@ -37,14 +42,71 @@ runParser (P p) = resultToEither . p
 instance Functor Parser where
     fmap f (P p) = P (fmap f . p)
 
+------------------------------
+#if defined(__GLASGOW_HASKELL__) && (__GLASGOW_HASKELL__ >= 800)
+------------------------------
+
+instance Applicative Parser where
+
+   pure  = pureParser
+
+   {-# INLINE pure #-}
+
+   (<*>) = ap
+
+   {-# INLINE (<*>) #-}
+
+   (<*) = discard
+
+   {-# INLINE (<*) #-}
+
 instance Monad Parser where
-    return x     = P (\ts-> Success ts x)
-    fail e       = P (\ts-> Failure ts e)
-    (P f) >>= g  = P (continue . f)
-      where
-        continue (Success ts x)             = let (P g') = g x in g' ts
-        continue (Committed r)              = Committed (continue r)
-        continue (Failure ts e)             = Failure ts e
+
+   (>>=) = bindParser
+
+   {-# INLINE (>>=) #-}
+
+instance MonadFail Parser where
+
+  fail = failParser
+
+  {-# INLINE fail #-}
+
+------------------------------
+#else
+------------------------------
+
+instance Applicative Parser where
+    pure = pureParser
+    pf <*> px = do { f <- pf; x <- px; pure (f x) }
+
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 610
+    p  <*  q  = p `discard` q
+#endif
+
+instance Monad Parser where
+    return = pureParser
+    fail   = failParser
+    (>>=)  = bindParser
+
+------------------------------
+#endif
+------------------------------
+
+pureParser :: a -> Parser a
+pureParser x = P (\ts -> Success ts x)
+
+failParser :: String -> Parser a
+failParser e = P (\ts -> Failure ts e)
+
+bindParser :: Parser a -> (a -> Parser b) -> Parser b
+bindParser (P f) g = P (continue . f)
+  where
+  continue (Success ts x)             = let (P g') = g x in g' ts
+  continue (Committed r)              = Committed (continue r)
+  continue (Failure ts e)             = Failure ts e
+
+------------------------------
 
 instance Commitment Parser where
     commit (P p)         = P (Committed . squash . p)
@@ -69,13 +131,6 @@ instance Commitment Parser where
                            r@(Success _ _)    -> r
                            r@(Committed _)    -> r )
             showErr (name,err) = name++":\n"++indent 2 err
-
-instance Applicative Parser where
-    pure f    = return f
-    pf <*> px = do { f <- pf; x <- px; return (f x) }
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 610
-    p  <*  q  = p `discard` q
-#endif
 
 instance Alternative Parser where
     empty     = fail "no parse"

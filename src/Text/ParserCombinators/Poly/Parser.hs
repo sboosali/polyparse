@@ -36,51 +36,76 @@ newtype Parser t a = P ([t] -> Result [t] a)
 instance Functor (Parser t) where
     fmap f (P p) = P (fmap f . p)
 
-----------------------------------------
+
+------------------------------
+#if defined(__GLASGOW_HASKELL__) && (__GLASGOW_HASKELL__ >= 800)
+------------------------------
 
 instance Applicative (Parser t) where
-    pure x    = P (\ts-> Success ts x)
 
-    pf <*> px = do { f <- pf; x <- px; return (f x) }
+   pure  = pureParser
+
+   {-# INLINE pure #-}
+
+   (<*>) = ap
+
+   {-# INLINE (<*>) #-}
+
+   (<*) = discard
+
+   {-# INLINE (<*) #-}
+
+instance Monad (Parser t) where
+
+   (>>=) = bindParser
+
+   {-# INLINE (>>=) #-}
+
+instance MonadFail (Parser t) where
+
+  fail = failParser
+
+  {-# INLINE fail #-}
+
+------------------------------
+#else
+------------------------------
+
+instance Applicative (Parser t) where
+    pure = pureParser
+    pf <*> px = do { f <- pf; x <- px; pure (f x) }
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 610
     p  <*  q  = p `discard` q
 #endif
 
-----------------------------------------
-
 instance Monad (Parser t) where
+    return = pureParser
+    fail   = failParser
+    (>>=)  = bindParser
 
-    (P f) >>= g  = P (continue . f)
-      where
-        continue (Success ts x)             = let (P g') = g x in g' ts
-        continue (Committed r)              = Committed (continue r)
-        continue (Failure ts e)             = Failure ts e
-
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
-    return       = pure
+------------------------------
 #endif
+------------------------------
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
-    fail = failParser
-#else
-
-----------------------------------------
-
-instance MonadFail (Parser t) where
-    fail = failParser
-#endif
+pureParser :: a -> Parser t a
+pureParser x = P (\ts -> Success ts x)
 
 failParser :: String -> Parser t a
-failParser e = P (\ts-> Failure ts e)
+failParser e = P (\ts -> Failure ts e)
+
+bindParser :: (Parser t) a -> (a -> Parser t b) -> Parser t b
+bindParser (P f) g = P (continue . f)
+  where
+  continue (Success ts x)             = let (P g') = g x in g' ts
+  continue (Committed r)              = Committed (continue r)
+  continue (Failure ts e)             = Failure ts e
 
 ----------------------------------------
 
 instance Alternative (Parser t) where
     empty     = failParser "no parse"
     p <|> q   = p `onFail` q
-
-----------------------------------------
 
 instance PolyParse (Parser t)
 
@@ -122,7 +147,6 @@ onFail :: Parser t a -> Parser t a -> Parser t a
     continue ts (Failure z e) = q ts
 --  continue _  (Committed r) = r   -- no, remain Committed
     continue _  r             = r
-
 
 ------------------------------------------------------------------------
 
