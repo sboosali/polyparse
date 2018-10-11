@@ -1,12 +1,3 @@
-{-# LANGUAGE CPP #-}
-
-------------------------------
-#ifndef MIN_VERSION_GLASGOW_HASKELL
-#define MIN_VERSION_GLASGOW_HASKELL(x,y,z1,z2) 0
-#endif
--- NOTE `ghc-7.10` introduced `MIN_VERSION_GLASGOW_HASKELL`.
-------------------------------
-
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Text.ParserCombinators.HuttonMeijer
@@ -45,20 +36,8 @@ module Text.ParserCombinators.HuttonMeijer
 
 import Data.Char
 import Control.Applicative ( Applicative(pure,(<*>)), Alternative(empty,(<|>)) )
-import Control.Monad
 
-------------------------------
-#ifdef MIN_VERSION_base
-#if MIN_VERSION_base(4,9,0)
-
--- NOTE `ghc-8.0.*` bundles `base-4.9.0.0`,
--- which introduces `Control.Monad.Fail`.
-
-import Control.Monad.Fail (MonadFail(..))
-
-#endif
-#endif
-------------------------------
+import Text.ParserCombinators.Poly.Compat
 
 infixr 5 +++
 
@@ -74,43 +53,48 @@ instance Functor Parser where
    fmap f (P p)    = P (\inp -> [(f v, out) | (v,out) <- p inp])
 
 ------------------------------
-#if MIN_VERSION_GLASGOW_HASKELL(8,2,0,0)
+#if defined(__GLASGOW_HASKELL__) && (__GLASGOW_HASKELL__ >= 800)
 ------------------------------
 
 instance Applicative Parser where
-   -- pure      :: a -> Parser a
-   pure v        = P (\inp -> [(v,inp)])
+
+   pure  = pureParser
+
+   {-# INLINE pure #-}
 
    (<*>) = ap
 
-instance Monad Parser where
-   -- return      :: a -> Parser a
-   return          = pure
+   {-# INLINE (<*>) #-}
 
-   -- >>=         :: Parser a -> (a -> Parser b) -> Parser b
-   (P p) >>= f     = P (\inp -> concat [papply (f v) out | (v,out) <- p inp])
+instance Monad Parser where
+
+   (>>=) = bindParser
+
+   {-# INLINE (>>=) #-}
 
 instance MonadFail Parser where
-   -- fail :: String -> Parser a
-   fail _ = P (\_ -> [])
+
+  fail = failParser
+
+  {-# INLINE fail #-}
 
 ------------------------------
 #else
 ------------------------------
 
 instance Applicative Parser where
-   pure  = return
+   pure  = pureParser
    (<*>) = ap
 
 instance Monad Parser where
    -- return      :: a -> Parser a
-   return v        = P (\inp -> [(v,inp)])
+   return          = pureParser
 
    -- >>=         :: Parser a -> (a -> Parser b) -> Parser b
-   (P p) >>= f     = P (\inp -> concat [papply (f v) out | (v,out) <- p inp])
+   (>>=)           = bindParser
 
    -- fail        :: String -> Parser a
-   fail _           = P (\_ -> [])
+   fail            = failParser
 
 ------------------------------
 #endif
@@ -122,10 +106,25 @@ instance Alternative Parser where
 
 instance MonadPlus Parser where
    -- mzero       :: Parser a
-   mzero           = P (\_ -> [])
+   mzero               = zeroParser
 
    -- mplus       :: Parser a -> Parser a -> Parser a
-   (P p) `mplus` (P q)  = P (\inp -> (p inp ++ q inp))
+   (P p) `mplus` (P q) = P (\inp -> (p inp ++ q inp))
+
+------------------------------
+
+pureParser :: a -> Parser a
+pureParser v = P (\inp -> [(v,inp)])
+
+bindParser :: Parser a -> (a -> Parser b) -> Parser b
+bindParser (P p) f = P (\inp -> concat [ papply (f v) out
+                                      | (v,out) <- p inp
+                                      ])
+failParser :: String -> Parser a
+failParser _ = zeroParser
+
+zeroParser :: Parser a
+zeroParser = P (\_ -> [])
 
 -- ------------------------------------------------------------
 -- * Other primitive parser combinators

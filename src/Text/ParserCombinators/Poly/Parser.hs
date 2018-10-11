@@ -1,11 +1,3 @@
-{-# LANGUAGE CPP #-}
-
-------------------------------
-#ifndef MIN_VERSION_GLASGOW_HASKELL
-#define MIN_VERSION_GLASGOW_HASKELL(x,y,z1,z2) 0
-#endif
--- NOTE `ghc-7.10` introduced `MIN_VERSION_GLASGOW_HASKELL`.
-------------------------------
 
 -- | This module contains the definitions for a generic parser, without
 --   running state.  These are the parts that are shared between the Plain
@@ -30,6 +22,11 @@ import Text.ParserCombinators.Poly.Base
 import Text.ParserCombinators.Poly.Result
 import Control.Applicative
 
+import Text.ParserCombinators.Poly.Compat
+import Prelude hiding (fail)
+
+----------------------------------------
+
 -- | This @Parser@ datatype is a fairly generic parsing monad with error
 --   reporting.  It can be used for arbitrary token types, not just
 --   String input.  (If you require a running state, use module Poly.State
@@ -39,6 +36,8 @@ newtype Parser t a = P ([t] -> Result [t] a)
 instance Functor (Parser t) where
     fmap f (P p) = P (fmap f . p)
 
+----------------------------------------
+
 instance Applicative (Parser t) where
     pure x    = P (\ts-> Success ts x)
 
@@ -46,6 +45,8 @@ instance Applicative (Parser t) where
 #if defined(GLASGOW_HASKELL) && GLASGOW_HASKELL > 610
     p  <*  q  = p `discard` q
 #endif
+
+----------------------------------------
 
 instance Monad (Parser t) where
 
@@ -55,9 +56,20 @@ instance Monad (Parser t) where
         continue (Committed r)              = Committed (continue r)
         continue (Failure ts e)             = Failure ts e
 
+#if defined(GLASGOW_HASKELL) && GLASGOW_HASKELL < 800
     return       = pure
+#endif
 
+#if defined(GLASGOW_HASKELL) && GLASGOW_HASKELL < 800
     fail e       = P (\ts-> Failure ts e)
+#else
+----------------------------------------
+
+instance MonadFail (Parser t) where
+    fail e       = P (\ts-> Failure ts e)
+#endif
+
+----------------------------------------
 
 instance Alternative (Parser t) where
     empty     = fail "no parse"
