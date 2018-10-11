@@ -42,6 +42,7 @@ import Prelude hiding (fail)
 --   reporting, and running state.
 --   It can be used for arbitrary token types, not just String input.
 --   (If you do not require a running state, use module Poly.Plain instead)
+
 newtype Parser s t a = P (s -> [t] -> Result ([t],s) a)
 
 instance Functor (Parser s t) where
@@ -61,6 +62,11 @@ instance Applicative (Parser s t) where
    (<*>) = ap
 
    {-# INLINE (<*>) #-}
+
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 610
+   (<*) = discard
+   {-# INLINE (<*) #-}
+#endif
 
 instance Monad (Parser s t) where
 
@@ -83,7 +89,8 @@ instance Applicative (Parser s t) where
     pf <*> px = do { f <- pf; x <- px; pure (f x) }
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 610
-    p  <*  q  = p `discard` q
+    (<*) = discard
+    {-# INLINE (<*) #-}
 #endif
 
 instance Monad (Parser s t) where

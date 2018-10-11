@@ -106,7 +106,8 @@ instance Applicative (Parser t) where
     pf <*> px = do { f <- pf; x <- px; pure (f x) }
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 610
-    p  <*  q  = p `discard` q
+    (<*) = discard
+    {-# INLINE (<*) #-}
 #endif
 
 instance Monad (Parser t) where

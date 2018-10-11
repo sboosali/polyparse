@@ -23,32 +23,70 @@ import Text.ParserCombinators.Poly.Result
 import qualified Text.ParserCombinators.Poly.Parser as P
 import Control.Applicative
 
-#if __GLASGOW_HASKELL__
-import Control.Exception hiding (bracket)
-throwE :: String -> a
-throwE msg = throw (ErrorCall msg)
-#else
-throwE :: String -> a
-throwE msg = error msg
-#endif
+import Text.ParserCombinators.Poly.Compat
+import Prelude hiding (fail)
+
+------------------------------------------------------------------------
 
 -- | The only differences between a Plain and a Lazy parser are the instance
 --   of Applicative, and the type (and implementation) of runParser.
 --   We therefore need to /newtype/ the original Parser type, to allow it
---   to have a different instance.
+--   to have a different instance
+
 newtype Parser t a = P (P.Parser t a)
+
+------------------------------
 #ifdef __GLASGOW_HASKELL__
-        deriving (Functor,Monad,Commitment)
+
+    deriving ( Functor
+             , Monad
+#if MIN_VERSION_base(4,9,0)
+             , MonadFail
+#endif
+             , Commitment
+             )
+
+------------------------------
 #else
+------------------------------
+
 instance Functor (Parser t) where
     fmap f (P p) = P (fmap f p)
+
 instance Monad (Parser t) where
-    return x  = P (return x)
-    fail e    = P (fail e)
-    (P f) >>= g = P (f >>= (\(P g')->g') . g)
+    return x    = P (pure x)
+    fail e      = P (fail e)
+    (P f) >>= g = P (f >>= (\(P g') -> g') . g)
+
 instance Commitment (Parser t) where
     commit (P p)   = P (commit p)
     (P p) `adjustErr` f  = P (p `adjustErr` f)
+
+#endif
+------------------------------
+
+instance Applicative (Parser t) where
+
+    pure x = P (pure x)
+
+    --   Apply a parsed function to a parsed value.  This version
+    --   is strict in the result of the function parser, but
+    --   lazy in the result of the argument parser.  (Argument laziness is
+    --   the distinctive feature over other implementations.)
+
+    (P (P.P pf)) <*> px = P (P.P go)
+
+      where
+        go = continue . pf
+
+        continue (Success z f)  = let (x,z') = runParser px z
+                                  in Success z' (f x)
+        continue (Committed r)  = Committed (continue r)
+        continue (Failure z e)  = Failure z e
+
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 610
+    (<*) = discard
+    {-# INLINE (<*) #-}
 #endif
 
 -- | Apply a parser to an input token sequence.
@@ -57,24 +95,10 @@ runParser (P (P.P p)) = fromResult . p
   where
     fromResult :: Result z a -> (a, z)
     fromResult (Success z a)  =  (a, z)
-    fromResult (Failure z e)  =  throwE e
+    fromResult (Failure _z e) =  throwE e
     fromResult (Committed r)  =  fromResult r
 
-instance Applicative (Parser t) where
-    pure f    = return f
-    --   Apply a parsed function to a parsed value.  This version
-    --   is strict in the result of the function parser, but
-    --   lazy in the result of the argument parser.  (Argument laziness is
-    --   the distinctive feature over other implementations.)
-    (P (P.P pf)) <*> px = P (P.P (continue . pf))
-      where
-        continue (Success z f)  = let (x,z') = runParser px z
-                                  in Success z' (f x)
-        continue (Committed r)  = Committed (continue r)
-        continue (Failure z e)  = Failure z e
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 610
-    p  <*  q  = p `discard` q
-#endif
+------------------------------
 
 instance Alternative (Parser t) where
     empty             = fail "no parse"

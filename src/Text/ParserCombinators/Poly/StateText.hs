@@ -41,7 +41,7 @@ import Control.Applicative
 import Text.ParserCombinators.Poly.Compat
 import Prelude hiding (fail)
 
---------------------------------------------------------------------------------
+----------------------------------------------------------------------------
 
 -- | This @Parser@ datatype is a specialised parsing monad with error
 --   reporting.  Whereas the standard version can be used for arbitrary
@@ -72,6 +72,10 @@ instance Applicative (Parser s) where
 
    {-# INLINE (<*>) #-}
 
+   (<*) = discard
+
+   {-# INLINE (<*) #-}
+
 instance Monad (Parser s) where
 
    (>>=) = bindParser
@@ -93,7 +97,8 @@ instance Applicative (Parser s) where
     pf <*> px = do { f <- pf; x <- px; pure (f x) }
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 610
-    p  <*  q  = p `discard` q
+    (<*) = discard
+    {-# INLINE (<*) #-}
 #endif
 
 instance Monad (Parser s) where

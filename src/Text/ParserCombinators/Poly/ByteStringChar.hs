@@ -56,6 +56,10 @@ instance Applicative Parser where
 
    {-# INLINE (<*>) #-}
 
+   (<*) = discard
+
+   {-# INLINE (<*) #-}
+
 instance Monad Parser where
 
    (>>=) = bindParser
@@ -77,7 +81,8 @@ instance Applicative Parser where
     pf <*> px = do { f <- pf; x <- px; pure (f x) }
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 610
-    p  <*  q  = p `discard` q
+    (<*) = discard
+    {-# INLINE (<*) #-}
 #endif
 
 instance Monad Parser where

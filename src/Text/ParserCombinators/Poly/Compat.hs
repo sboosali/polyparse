@@ -27,10 +27,12 @@
 module Text.ParserCombinators.Poly.Compat
 
 #if MIN_VERSION_base(4,9,0)
-  ( module Control.Monad
+  ( module Text.ParserCombinators.Poly.Compat
+  , module Control.Monad
   , module Control.Monad.Fail
 #else
-  ( module Control.Monad
+  ( module Text.ParserCombinators.Poly.Compat
+  , module Control.Monad
 #endif
   ) where
 
@@ -41,6 +43,22 @@ import Control.Monad.Fail (MonadFail(..))
 import Control.Monad      hiding (fail)
 #else
 import Control.Monad
+#endif
+
+--------------------------------------------------
+
+#if __GLASGOW_HASKELL__
+import Control.Exception hiding (bracket)
+#endif
+
+--------------------------------------------------
+
+#if __GLASGOW_HASKELL__
+throwE :: String -> a
+throwE msg = throw (ErrorCall msg)
+#else
+throwE :: String -> a
+throwE msg = error msg
 #endif
 
 --------------------------------------------------
