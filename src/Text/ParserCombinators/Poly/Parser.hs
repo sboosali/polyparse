@@ -42,7 +42,8 @@ instance Applicative (Parser t) where
     pure x    = P (\ts-> Success ts x)
 
     pf <*> px = do { f <- pf; x <- px; return (f x) }
-#if defined(GLASGOW_HASKELL) && GLASGOW_HASKELL > 610
+
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 610
     p  <*  q  = p `discard` q
 #endif
 
@@ -56,24 +57,30 @@ instance Monad (Parser t) where
         continue (Committed r)              = Committed (continue r)
         continue (Failure ts e)             = Failure ts e
 
-#if defined(GLASGOW_HASKELL) && GLASGOW_HASKELL < 800
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
     return       = pure
 #endif
 
-#if defined(GLASGOW_HASKELL) && GLASGOW_HASKELL < 800
-    fail e       = P (\ts-> Failure ts e)
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
+    fail = failParser
 #else
+
 ----------------------------------------
 
 instance MonadFail (Parser t) where
-    fail e       = P (\ts-> Failure ts e)
+    fail = failParser
 #endif
+
+failParser :: String -> Parser t a
+failParser e = P (\ts-> Failure ts e)
 
 ----------------------------------------
 
 instance Alternative (Parser t) where
-    empty     = fail "no parse"
+    empty     = failParser "no parse"
     p <|> q   = p `onFail` q
+
+----------------------------------------
 
 instance PolyParse (Parser t)
 

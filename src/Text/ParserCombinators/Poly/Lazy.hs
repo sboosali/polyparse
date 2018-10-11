@@ -72,7 +72,7 @@ instance Applicative (Parser t) where
                                   in Success z' (f x)
         continue (Committed r)  = Committed (continue r)
         continue (Failure z e)  = Failure z e
-#if defined(GLASGOW_HASKELL) && GLASGOW_HASKELL > 610
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 610
     p  <*  q  = p `discard` q
 #endif
 
