@@ -66,6 +66,8 @@ library
         Text.ParserCombinators.Poly.StateLazy,
         Text.ParserCombinators.Poly.Lex,
         Text.Parse
+  other-modules:
+         Text.ParserCombinators.Poly.Compat
 
   build-depends:   base < 5
 
