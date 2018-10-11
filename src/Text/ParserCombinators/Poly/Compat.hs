@@ -17,12 +17,17 @@
 
 --------------------------------------------------
 
--- | Compatibility module.
---
--- Exports 'Control.Monad' and (when present) 'Control.Monad.Fail'.
--- 
--- NOTE: `ghc-8.0.*` bundles `base-4.9.0.0`, which introduces `Control.Monad.Fail`.
---
+{-| Compatibility module.
+
+Forwards-Compatibility and Backwards-Compatibility for:
+
+* the <https://prime.haskell.org/wiki/Libraries/Proposals/MonadFail MonadFail> proposal.
+
+    Exports 'Control.Monad' and (when present) 'Control.Monad.Fail'.
+
+    `ghc-8.0.*` bundles `base-4.9.0.0`, which introduces `Control.Monad.Fail`.
+
+-}
 
 module Text.ParserCombinators.Poly.Compat
 

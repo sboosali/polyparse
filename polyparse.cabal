@@ -2,7 +2,7 @@ cabal-version:  >=1.10
 build-type:     Simple
 
 name:           polyparse
-version:        1.21
+version:        1.30
 --x-revision: 0
 
 ----------------------------------------
@@ -24,11 +24,11 @@ description:
             .
 
 tested-with:
-    GHC == 7.10.3
-  , GHC == 8.0.2
-  , GHC == 8.2.2
-  , GHC == 8.4.3
-  , GHC == 8.6.1
+            GHC == 7.10.3
+          , GHC == 8.0.2
+          , GHC == 8.2.2
+          , GHC == 8.4.3
+          , GHC == 8.6.1
 
 license:        LGPL
 license-file:   COPYRIGHT
