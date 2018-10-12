@@ -17,11 +17,6 @@ description:
             replacement for the standard Read class, for better
             deserialisation of Haskell values from Strings.
             .
-            Fork of @polyparse@.
-            .
-            (If you are the maintainer, please: [1] add an issue-tracker (see below);
-            and [2] review the emailed patch, also here <TODO>.)
-            .
 
 tested-with:
             GHC == 7.10.3
@@ -32,9 +27,9 @@ tested-with:
 
 license:        LGPL
 license-file:   COPYRIGHT
-copyright:      (c) 2006-2016 Malcolm Wallace
+copyright:      (c) 2006-2016 Malcolm Wallace, 2018 Spiros Boosalis
 author:         Malcolm Wallace <Malcolm.Wallace@me.com>
-maintainer:     author
+maintainer:     Malcolm Wallace <Malcolm.Wallace@me.com>, Spiros Boosalis <samboosalis@gmail.com>
 homepage:       http://code.haskell.org/~malcolm/polyparse/
 
 extra-source-files: LICENCE-LGPL, LICENCE-commercial
