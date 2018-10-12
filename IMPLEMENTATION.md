@@ -3,7 +3,9 @@
 
 ## `CHANGELOG`
 
-* Changes in `polyparse-1.20` include:
+* `polyparse-1.30`
+
+Changes in the source-code of `polyparse` include:
 
     * add `MonadFail` instances;
     * add non-`return` `pure` definitions;
@@ -11,10 +13,15 @@
 
 These changes are **all** `CPP`-guarded (see below).
 
+and changes in `polyparse.cabal` include:
+
+    * edit license to a valid "SPDX Identifier" (i.e. to `LGPL-3.0-only`)
+    * add `default-language` and `other-extensions`
+    * upgrade to `Cabal-2` (for better checking of the above)
 
 ## Future Compatibility
 
-`polyparse-1.20` updates the `Monad` instances for its (several) `Parser` types. Why? For compatibility with these proposals:
+`polyparse` updates the `Monad` instances for its (several) `Parser` types. Why? For compatibility with these proposals:
 
 * <https://ghc.haskell.org/trac/ghc/wiki/Proposal/MonadOfNoReturn MonadOfNoReturn>
 * <https://ghc.haskell.org/trac/ghc/wiki/Proposal/MonadFail MonadFail>
@@ -38,13 +45,13 @@ For `MonadFail`, warnings (introduced in `ghc-8.0` via the `-Wnoncanonical-monad
 
 ## Backwards-Compatibility
 
-`polyparse-1.20` wraps the following changes (see above) with `CPP`:
+`polyparse` wraps the following changes (see above) with `CPP`:
 
 * extra `import`s,
 * new `class`es,
 * omitted (`default`) methods.
 
-Then, `polyparse-1.20` guards the `CPP` itself via:
+Then, `polyparse` guards the `CPP` itself via:
 
 * `#if`s (obviously), like `MIN_VERSION_GLASGOW_HASKELL(8,2,0,0)` and `MIN_VERSION_base(4,9,0)`;
 * and these `#if`s are beneath `#ifdefs` on `CPP` symbols, defined by newer version of `ghc` and/or `cabal`.

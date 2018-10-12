@@ -1,4 +1,4 @@
-cabal-version:  >=1.10
+cabal-version:  2.2
 build-type:     Simple
 
 name:           polyparse
@@ -25,7 +25,7 @@ tested-with:
           , GHC == 8.4.3
           , GHC == 8.6.1
 
-license:        LGPL
+license:        LGPL-3.0-only
 license-file:   COPYRIGHT
 copyright:      (c) 2006-2016 Malcolm Wallace, 2018 Spiros Boosalis
 author:         Malcolm Wallace <Malcolm.Wallace@me.com>
