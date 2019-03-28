@@ -63,4 +63,3 @@ These guards, along with the already existing manually-written instances, provid
 * non-GHC compilers,
 * and any haskell compiler supporting `-XCPP`.
 
-
